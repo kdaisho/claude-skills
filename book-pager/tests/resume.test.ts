@@ -31,10 +31,10 @@ test("a resumed session gets its own book back", async ($, on) => {
   };
   const mount = () =>
     $.ui.mount({
-      plugin: "book-pages",
+      plugin: "book-pager",
       surface: "terminal",
       component: "Pane",
-      requestId: "book-pages",
+      requestId: "book-pager",
       props: PANE_PROPS,
     });
 

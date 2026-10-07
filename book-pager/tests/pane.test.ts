@@ -36,10 +36,10 @@ for (const surface of ["terminal", "desktop"] as const) {
       });
     };
     const ui = await $.ui.mount({
-      plugin: "book-pages",
+      plugin: "book-pager",
       surface,
       component: "Pane",
-      requestId: "book-pages",
+      requestId: "book-pager",
       props: PANE_PROPS,
     });
     const shows = async (text: RegExp) =>

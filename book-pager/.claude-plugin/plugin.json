@@ -1,5 +1,5 @@
 {
-  "name": "book-pages",
+  "name": "book-pager",
   "version": "0.1.0",
   "description": "Shows Claude's finished replies in a side pane as fixed pages with short lines",
   "types": "./types/index.d.ts",

@@ -1,4 +1,4 @@
-# book-pages mod for Claude Code
+# book-pager mod for Claude Code
 
 A mod (a Claude Code plugin made of function hooks) that shows Claude's finished replies in a pane on the right side of the screen. It splits them into pages of a fixed size, like a book, with short lines.
 
@@ -104,13 +104,13 @@ When the pane draws, the mod asks for the session id. If the book in `$.state` b
 
 ## Where it lives
 
-- Code: [`book-pages/`](book-pages/) in this repository, cloned to `~/code/claude-skills/`.
+- Code: [`book-pager/`](book-pager/) in this repository, cloned to `~/code/claude-skills/`.
 - It loads in every session because of this setting in `~/.claude/settings.json`. To load more mods, add their paths separated by `:`:
   ```json
-  "env": { "CLAUDE_CODE_PLUGIN_DIRS": "~/code/claude-skills/book-pages" }
+  "env": { "CLAUDE_CODE_PLUGIN_DIRS": "~/code/claude-skills/book-pager" }
   ```
-  To turn it off, remove `~/code/claude-skills/book-pages` from that line and start a new session.
-- The saved books are not in the repository. They are in `~/.claude/plugins/store/book-pages_*.json` on each machine.
+  To turn it off, remove `~/code/claude-skills/book-pager` from that line and start a new session.
+- The saved books are not in the repository. They are in `~/.claude/plugins/store/book-pager_*.json` on each machine.
 
 ## Page width
 
@@ -119,20 +119,20 @@ The page width is the `width` setting, in terminal columns (characters, not pixe
 To change it, change "Page width" in `/config`, or add this to `~/.claude/settings.json` and restart:
 
 ```json
-"pluginConfigs": { "book-pages": { "options": { "width": 90 } } }
+"pluginConfigs": { "book-pager": { "options": { "width": 90 } } }
 ```
 
-Check the spelling of `pluginConfigs`. Claude Code ignores a key it does not know, so a typo leaves the width at 76 with no error. If the width still does not change after a restart, try the name `book-pages@inline` in place of `book-pages`, or use `/config`, which saves it under the right name.
+Check the spelling of `pluginConfigs`. Claude Code ignores a key it does not know, so a typo leaves the width at 76 with no error. If the width still does not change after a restart, try the name `book-pager@inline` in place of `book-pager`, or use `/config`, which saves it under the right name.
 
 Do not change `"default"` in `plugin.json` to set your own width. That changes it for everyone who installs the mod.
 ## Set it up on a machine
 
 1. Run `claude --version`. The mod was built and tested on 2.1.289. If the version is older, run `claude update` first, because the mod API is "early access" and changes between releases.
 2. Clone this repository to `~/code/claude-skills/`, or run `git pull` if it is already there.
-3. Run `claude plugin validate ~/code/claude-skills/book-pages`. The expected result is "Validation passed with warnings". The known warning is "No author information provided". It is harmless.
-4. Run `claude plugin test ~/code/claude-skills/book-pages`. The expected result is "9 pass, 0 fail".
+3. Run `claude plugin validate ~/code/claude-skills/book-pager`. The expected result is "Validation passed with warnings". The known warning is "No author information provided". It is harmless.
+4. Run `claude plugin test ~/code/claude-skills/book-pager`. The expected result is "12 pass, 0 fail".
 5. If a step fails, the API has probably changed. Ask Claude to load the `plugin-authoring` skill, read `.claude-plugin/types/claude-code/index.d.ts` in the mod folder (Claude Code writes it for the installed version), and fix the code to match it.
-6. Add the `CLAUDE_CODE_PLUGIN_DIRS` line from "Where it lives" to `~/.claude/settings.json`. If the file already has an `"env"` block, add the line inside that block. Do not replace the file. If the line already points to `~/.claude/mods/book-pages` (the old place), change it, then delete that old folder.
+6. Add the `CLAUDE_CODE_PLUGIN_DIRS` line from "Where it lives" to `~/.claude/settings.json`. If the file already has an `"env"` block, add the line inside that block. Do not replace the file. If the line already points to `~/.claude/mods/book-pages` (the old place), change it, then delete that old folder. If it points to `~/code/claude-skills/book-pages` (the name before the rename to `book-pager`), change it, and rename the `book-pages` key in `pluginConfigs` to `book-pager` too.
 7. Start a new session and run `/pages`.
 8. To use a different page width, see "Page width".
 
