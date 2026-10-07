@@ -35,9 +35,14 @@ function lineWidth(line: Line): number {
   return line.reduce((sum, run) => sum + textWidth(run.text), 0);
 }
 
+// A link shows only its text, because the pane cannot open the URL.
+const LINK = /\[([^\]]+)\]\([^)\s]+\)/g;
+
 function parseInline(text: string, base: Style): Run[] {
   const runs: Run[] = [];
-  for (const part of text.split(/(\*\*[^*]+\*\*|`[^`]+`)/)) {
+  for (const part of text
+    .replace(LINK, "$1")
+    .split(/(\*\*[^*]+\*\*|`[^`]+`)/)) {
     if (part === "") {
       continue;
     }
@@ -148,7 +153,7 @@ function wrap(
   return lines;
 }
 
-// Cuts at the width with no word wrapping, for code and tables.
+// Cuts at the width with no word wrapping, for code.
 function hardWrap(
   text: string,
   width: number,
@@ -166,10 +171,113 @@ function hardWrap(
   ]);
 }
 
+const TABLE_ROW = /^\s*\|/;
+const COLUMN_GAP = 2;
+
+// "\|" is a pipe inside a cell, not a column border.
+function splitCells(row: string): string[] {
+  return row
+    .trim()
+    .replace(/^\|/, "")
+    .replace(/(?<!\\)\|$/, "")
+    .split(/(?<!\\)\|/)
+    .map((cell) => cell.replace(/\\\|/g, "|").trim());
+}
+
+function isDividerRow(cells: string[]): boolean {
+  return cells.every((cell) => /^:?-+:?$/.test(cell));
+}
+
+// Aligned columns, or undefined when the table is wider than the width.
+function formatGrid(
+  header: string[],
+  body: string[][],
+  width: number,
+): Line[] | undefined {
+  const rows = [
+    ...(header.length > 0
+      ? [header.map((cell) => parseInline(cell, "bold"))]
+      : []),
+    ...body.map((row) => row.map((cell) => parseInline(cell, "plain"))),
+  ];
+  const columns = Math.max(0, ...rows.map((row) => row.length));
+  const widths = Array.from({ length: columns }, (_, column) =>
+    Math.max(0, ...rows.map((row) => lineWidth(row[column] ?? []))),
+  );
+  const total =
+    widths.reduce((sum, size) => sum + size, 0) +
+    COLUMN_GAP * Math.max(0, columns - 1);
+  if (total > width) {
+    return undefined;
+  }
+  const lines: Line[] = rows.map((row) =>
+    widths.flatMap((size, column) => {
+      const cell = row[column] ?? [];
+      if (column === columns - 1) {
+        return cell;
+      }
+      const padding = size - lineWidth(cell) + COLUMN_GAP;
+
+      return [...cell, { text: " ".repeat(padding), style: "plain" as const }];
+    }),
+  );
+  if (header.length > 0) {
+    lines.splice(1, 0, [{ text: "─".repeat(total), style: "dim" }]);
+  }
+
+  return lines;
+}
+
+// One block per row: the first cell is the title, then each header over its value.
+function formatCards(
+  header: string[],
+  body: string[][],
+  width: number,
+): Line[] {
+  const lines: Line[] = [];
+  body.forEach((row, index) => {
+    if (index > 0) {
+      lines.push([{ text: "─".repeat(width), style: "dim" }]);
+    }
+    lines.push(...wrap(parseInline(row[0] ?? "", "bold"), width, "", ""));
+    row.slice(1).forEach((cell, column) => {
+      if (cell === "") {
+        return;
+      }
+      lines.push([]);
+      const label = header[column + 1] ?? "";
+      if (label !== "") {
+        lines.push(...wrap(parseInline(label, "bold"), width, "  ", "  "));
+      }
+      lines.push(...wrap(parseInline(cell, "plain"), width, "  ", "  "));
+    });
+  });
+
+  return lines;
+}
+
+function formatTable(rows: string[], width: number): Line[] {
+  const cells = rows.map(splitCells);
+  const hasHeader = cells.length > 1 && isDividerRow(cells[1] ?? []);
+  const header = hasHeader ? (cells[0] ?? []) : [];
+  const body = hasHeader ? cells.slice(2) : cells;
+
+  return formatGrid(header, body, width) ?? formatCards(header, body, width);
+}
+
 export function formatMarkdown(markdown: string, width: number): Line[] {
   const lines: Line[] = [];
   let isInCode = false;
+  let tableRows: string[] = [];
   for (const source of markdown.replace(/\t/g, "  ").split("\n")) {
+    if (!isInCode && TABLE_ROW.test(source)) {
+      tableRows.push(source);
+      continue;
+    }
+    if (tableRows.length > 0) {
+      lines.push(...formatTable(tableRows, width));
+      tableRows = [];
+    }
     if (/^\s*```/.test(source)) {
       isInCode = !isInCode;
       continue;
@@ -187,10 +295,6 @@ export function formatMarkdown(markdown: string, width: number): Line[] {
       lines.push(...wrap(parseInline(heading[1] ?? "", "bold"), width, "", ""));
       continue;
     }
-    if (/^\s*\|/.test(source)) {
-      lines.push(...hardWrap(source, width, "plain", ""));
-      continue;
-    }
     const item = /^(\s*)([-*+]|\d+[.)])\s+(.*)$/.exec(source);
     if (item) {
       const prefix = `${item[1] ?? ""}${item[2] ?? ""} `;
@@ -204,6 +308,9 @@ export function formatMarkdown(markdown: string, width: number): Line[] {
     lines.push(
       ...wrap(parseInline(source.trim(), "plain"), width, leading, leading),
     );
+  }
+  if (tableRows.length > 0) {
+    lines.push(...formatTable(tableRows, width));
   }
 
   return lines;

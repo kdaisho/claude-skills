@@ -18,6 +18,10 @@ const REPLY = [
   'echo "a code line that is longer than the width and has to be cut into pieces"',
   "```",
   "",
+  "| Ticket | Owner | How it matches |",
+  "| --- | --- | --- |",
+  "| [APP-1](https://linear.app/x/APP-1) \"Fix the import\" | Nobody | **Overlap.** It covers the same page and the same columns. |",
+  "",
   "日本語の文章も二文字分の幅で数えるので、行の長さが正しくなります。日本語の文章も二文字分の幅で数えます。",
 ].join("\n");
 
@@ -54,4 +58,53 @@ test("a long prompt is cut to four lines that fit the width", async () => {
       true,
     );
   }
+});
+
+test("a link shows only its text", async () => {
+  const text = formatMarkdown("See [APP-1](https://linear.app/x/APP-1) now", 76)
+    .flat()
+    .map((run) => run.text)
+    .join("");
+  expect(text).toBe("See APP-1 now");
+});
+
+const WIDE_TABLE = [
+  "| Ticket | Owner | How it matches |",
+  "| --- | --- | --- |",
+  "| APP-1 | Nobody | Overlap. It covers the same page and the same columns. |",
+  "| APP-2 | Someone | Related. |",
+].join("\n");
+
+test("a table wider than the width becomes one card per row", async () => {
+  const lines = formatMarkdown(WIDE_TABLE, 30).map((line) =>
+    line.map((run) => run.text).join(""),
+  );
+  expect(lines).toEqual([
+    "APP-1",
+    "",
+    "  Owner",
+    "  Nobody",
+    "",
+    "  How it matches",
+    "  Overlap. It covers the same",
+    "  page and the same columns.",
+    "─".repeat(30),
+    "APP-2",
+    "",
+    "  Owner",
+    "  Someone",
+    "",
+    "  How it matches",
+    "  Related.",
+  ]);
+});
+
+test("a table that fits stays as aligned columns", async () => {
+  const table = ["| A | Long |", "|---|---|", "| `x` | y |", "| zz | \\| |"].join(
+    "\n",
+  );
+  const lines = formatMarkdown(table, 76).map((line) =>
+    line.map((run) => run.text).join(""),
+  );
+  expect(lines).toEqual(["A   Long", "─".repeat(8), "x   y", "zz  |"]);
 });
