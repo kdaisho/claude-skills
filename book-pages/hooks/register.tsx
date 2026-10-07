@@ -6,8 +6,9 @@ import { entryPages } from "./pages";
 import type { Line, Run } from "./pages";
 
 const PANE = "book-pages";
-const MAX_COLUMNS = 76;
-const DOCK_COLUMNS = 80;
+const DEFAULT_COLUMNS = 76;
+// The pane's border and padding around the text.
+const DOCK_MARGIN = 4;
 const MAX_ENTRIES = 200;
 // The button row and the rule under it.
 const HEADER_ROWS = 2;
@@ -86,8 +87,11 @@ async function saveEntries($: EngineInterface, saved: Book) {
   await $.store.set(SAVED_SESSIONS_KEY, sessions);
 }
 
+// The page width from the plugin's settings, set when the module loads.
+let maxColumns = DEFAULT_COLUMNS;
+
 // The pane's text size from its last draw, so a key typed in the prompt pages the same way.
-let layout = { width: MAX_COLUMNS, rows: 20 };
+let layout = { width: DEFAULT_COLUMNS, rows: 20 };
 
 type Spot = {
   book: Line[][][];
@@ -157,12 +161,16 @@ function openPane($: EngineInterface, isFocused: boolean) {
   return $.ui.open({
     id: PANE,
     title: "Pages",
-    columns: DOCK_COLUMNS,
+    columns: maxColumns + DOCK_MARGIN,
     ...(isFocused ? { focus: true } : {}),
   });
 }
 
-export const register: Register = (on) => {
+export const register: Register = (on, options) => {
+  maxColumns =
+    typeof options.width === "number" ? options.width : DEFAULT_COLUMNS;
+  layout = { ...layout, width: maxColumns };
+
   on("session.start", async ($, e, next) => {
     await $.command.register({
       name: "pages",
@@ -248,7 +256,7 @@ export const register: Register = (on) => {
   on("ui.render", { component: "Pane", requestId: PANE }, async ($, e) => {
     const { Box, Text, Button } = $.ui.resolve(e);
     layout = {
-      width: Math.max(10, Math.min(MAX_COLUMNS, e.props.bodyColumns)),
+      width: Math.max(10, Math.min(maxColumns, e.props.bodyColumns)),
       rows: Math.max(1, e.props.scroll.bodyRows - HEADER_ROWS),
     };
     const spot = await findSpot($);

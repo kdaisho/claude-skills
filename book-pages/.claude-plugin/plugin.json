@@ -2,5 +2,15 @@
   "name": "book-pages",
   "version": "0.1.0",
   "description": "Shows Claude's finished replies in a side pane as fixed pages with short lines",
-  "types": "./types/index.d.ts"
+  "types": "./types/index.d.ts",
+  "userConfig": {
+    "width": {
+      "type": "number",
+      "title": "Page width",
+      "description": "Columns of text on each page; the pane is 4 columns wider",
+      "default": 76,
+      "min": 20,
+      "max": 200
+    }
+  }
 }
