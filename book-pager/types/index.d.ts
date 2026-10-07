@@ -9,7 +9,7 @@ export type Book = {
 
 declare module "claude-code" {
   interface PluginState {
-    "book-pages": {
+    "book-pager": {
       book: Book;
       pendingPrompt: string;
     };

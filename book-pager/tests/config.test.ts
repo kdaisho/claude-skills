@@ -13,10 +13,10 @@ const PANE_PROPS = {
 // The rule under the buttons is exactly as wide as the page text.
 const showsRule = async ($: Engine, width: number) => {
   const ui = await $.ui.mount({
-    plugin: "book-pages",
+    plugin: "book-pager",
     surface: "terminal",
     component: "Pane",
-    requestId: "book-pages",
+    requestId: "book-pager",
     props: PANE_PROPS,
   });
   const rule = await ui.find({

@@ -5,7 +5,7 @@ import type { Book, BookEntry, BookPosition } from "../types";
 import { entryPages } from "./pages";
 import type { Line, Run } from "./pages";
 
-const PANE = "book-pages";
+const PANE = "book-pager";
 const DEFAULT_COLUMNS = 76;
 // The pane's border and padding around the text.
 const DOCK_MARGIN = 4;
@@ -21,9 +21,9 @@ const EMPTY_BOOK: Book = {
   entries: [],
   position: { entry: 0, page: 0 },
 };
-const heldBook = atom({ plugin: "book-pages", key: "book" } as const, EMPTY_BOOK);
+const heldBook = atom({ plugin: "book-pager", key: "book" } as const, EMPTY_BOOK);
 const pendingPrompt = atom(
-  { plugin: "book-pages", key: "pendingPrompt" } as const,
+  { plugin: "book-pager", key: "pendingPrompt" } as const,
   "",
 );
 
