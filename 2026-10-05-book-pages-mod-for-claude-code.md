@@ -78,7 +78,7 @@ How a page is made (`hooks/pages.ts`):
 
 ```
 reply text (markdown)
-  → wrap at min(76, pane width) characters; Japanese counts as 2 columns
+  → wrap at min(width setting, pane width) characters; Japanese counts as 2 columns
   → cut into pages of (pane height − 2) lines
   → a page never starts with a blank line
   → each reply starts on a new page
@@ -112,15 +112,29 @@ When the pane draws, the mod asks for the session id. If the book in `$.state` b
   To turn it off, remove `~/code/claude-skills/book-pages` from that line and start a new session.
 - The saved books are not in the repository. They are in `~/.claude/plugins/store/book-pages_*.json` on each machine.
 
+## Page width
+
+The page width is the `width` setting, in terminal columns (characters, not pixels). The default is 76, and it can be 20 to 200. The pane opens 4 columns wider than the text. If the terminal is too narrow to give the pane that much room, the text shrinks to fit the pane.
+
+To change it, change "Page width" in `/config`, or add this to `~/.claude/settings.json` and restart:
+
+```json
+"pluginConfigs": { "book-pages": { "options": { "width": 90 } } }
+```
+
+Check the spelling of `pluginConfigs`. Claude Code ignores a key it does not know, so a typo leaves the width at 76 with no error. If the width still does not change after a restart, try the name `book-pages@inline` in place of `book-pages`, or use `/config`, which saves it under the right name.
+
+Do not change `"default"` in `plugin.json` to set your own width. That changes it for everyone who installs the mod.
 ## Set it up on a machine
 
 1. Run `claude --version`. The mod was built and tested on 2.1.289. If the version is older, run `claude update` first, because the mod API is "early access" and changes between releases.
 2. Clone this repository to `~/code/claude-skills/`, or run `git pull` if it is already there.
 3. Run `claude plugin validate ~/code/claude-skills/book-pages`. The expected result is "Validation passed with warnings". The known warning is "No author information provided". It is harmless.
-4. Run `claude plugin test ~/code/claude-skills/book-pages`. The expected result is "7 pass, 0 fail".
+4. Run `claude plugin test ~/code/claude-skills/book-pages`. The expected result is "9 pass, 0 fail".
 5. If a step fails, the API has probably changed. Ask Claude to load the `plugin-authoring` skill, read `.claude-plugin/types/claude-code/index.d.ts` in the mod folder (Claude Code writes it for the installed version), and fix the code to match it.
 6. Add the `CLAUDE_CODE_PLUGIN_DIRS` line from "Where it lives" to `~/.claude/settings.json`. If the file already has an `"env"` block, add the line inside that block. Do not replace the file. If the line already points to `~/.claude/mods/book-pages` (the old place), change it, then delete that old folder.
 7. Start a new session and run `/pages`.
+8. To use a different page width, see "Page width".
 
 `tsconfig.json` and `.claude-plugin/types/` are not in the repository. Claude Code creates them when it first loads the mod.
 
@@ -137,14 +151,14 @@ If `/pages` is missing from the `/` list even though steps 3 and 4 passed, the m
 ## Changing it
 
 - Check: `claude plugin validate <folder>`
-- Test: `claude plugin test <folder>` (7 tests: line width, styles, page size, prompt cut, page turning on terminal and desktop, and a resumed session getting its own book back)
+- Test: `claude plugin test <folder>` (9 tests: line width, styles, page size, prompt cut, page turning on terminal and desktop, a resumed session getting its own book back, and the width setting with its default and a set value)
 - The test tools cannot simulate typing into the prompt, so the `,` and `.` keys were only tested by hand.
 - Ask Claude to load the `plugin-authoring` skill before changing the code. It has the mod API docs.
 
 ## Before sharing it publicly
 
 - It is a plugin, not a skill. A skill cannot draw a pane or catch keys. Share it as a plugin in a GitHub repository.
-- Make the keys and the width user settings. Taking `,` and `.` fits me, but not everyone.
+- Make the keys a user setting. Taking `,` and `.` fits me, but not everyone. The width became a setting on 2026-10-06.
 - Say what it was tested on: Ghostty, Claude Code's fullscreen layout, Claude Code 2.1.289. The mod API is marked "early access" and can change between releases.
 - Test the narrow layout more, where the pane sits above the prompt (below 110 columns). Opening and closing it with `/pages` works there. Turning pages there has not been tested.
 - Collect the existing replies when the mod loads, so the pane does not start empty.
