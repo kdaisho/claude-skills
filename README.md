@@ -23,7 +23,7 @@ To load it in every session, add this to `~/.claude/settings.json` (inside the `
 
 - `/pager` shows or hides the pane.
 - `p` / `n` turn the page when the pane has focus. With the prompt empty, `,` and `.` turn it from the prompt.
-- The text fills the pane, so drag the pane's edge to change the page width. A table shows as columns when it fits and as one card per row when it does not.
+- The text fills the pane, so drag the pane's edge to change the page width. A table is drawn with borders when it fits and as one card per row when it does not.
 - The pane opens at the `width` setting, in terminal columns of text (default 76, 20 to 200). Change "Page width" in `/config`, or set it in `~/.claude/settings.json` and restart:
 
   ```json

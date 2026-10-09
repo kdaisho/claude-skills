@@ -41,7 +41,7 @@ test("a pane dragged wider than the width setting gets wider pages", { options: 
   expect(await showsRule($, 120, 30)).toBe(false);
 });
 
-// About 70 columns as aligned columns.
+// 69 columns with borders.
 const WIDE_TABLE = [
   "| Method       | Grind  | Water temp | Brew time | Gear needed      |",
   "| ------------ | ------ | ---------- | --------- | ---------------- |",
@@ -49,7 +49,7 @@ const WIDE_TABLE = [
   "| French press | Coarse | 93–96 °C   | 4 min     | Press pot        |",
 ].join("\n");
 
-test("a table turns into a grid when the pane is wide enough", { options: { width: 40 } }, async ($, on) => {
+test("a table gets its borders when the pane is wide enough", { options: { width: 40 } }, async ($, on) => {
   on("session.id", () => ({ value: "session-a" }));
   mock.store(on);
   on("prompt.submit", (_$, e) => ({ text: e.text }));
@@ -62,7 +62,7 @@ test("a table turns into a grid when the pane is wide enough", { options: { widt
     turnId: "table",
     reason: "answer",
   });
-  const grid = /Method\s{2,}Grind\s{2,}Water temp/;
+  const grid = /│ Method\s+│ Grind\s+│ Water temp/;
   expect(await shows($, 40, grid)).toBe(false);
   expect(await shows($, 100, grid)).toBe(true);
 });

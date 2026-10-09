@@ -52,7 +52,7 @@ What the pane shows:
 - Every finished reply of the session, as one book. Each reply starts at the top of a new page.
 - My prompt as a dim line starting with `›` above each reply, cut to 4 lines.
 - A top row with `p: Prev`, `n: Next`, the page count and a reminder of the keys, then a thin line, then the text.
-- Bold text as bold, inline code in cyan, headings as bold. Code blocks and tables are cut at the line width instead of wrapped.
+- Bold text as bold, inline code in cyan, headings as bold. Code blocks are cut at the line width instead of wrapped. A table is drawn with borders when it fits, and as one card per row when it does not.
 
 ## Tokens
 
@@ -114,7 +114,7 @@ When the pane draws, the mod asks for the session id. If the book in `$.state` b
 
 ## Page width
 
-The text fills the pane, so dragging the pane's edge changes the page width, and a table switches between columns and one card per row as it fits. Claude Code remembers a dragged width.
+The text fills the pane, so dragging the pane's edge changes the page width, and a table switches between a table with borders and one card per row as it fits. Claude Code remembers a dragged width.
 
 The `width` setting is the width the pane opens with, in terminal columns of text (characters, not pixels). The default is 76, and it can be 20 to 200. The pane opens 4 columns wider than the text. A width you dragged the pane to wins over it. If the terminal is too narrow to give the pane that much room, the text shrinks to fit the pane.
 
