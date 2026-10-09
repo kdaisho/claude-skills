@@ -2,7 +2,7 @@ import { expect, mock, test } from "claude-code/testing";
 import type { Engine } from "claude-code/testing";
 
 const PANE_PROPS = {
-  title: "Pages",
+  title: "Pager",
   isFocused: true,
   bodyColumns: 60,
   placement: "dock",

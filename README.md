@@ -21,7 +21,7 @@ To load it in every session, add this to `~/.claude/settings.json` (inside the `
 "env": { "CLAUDE_CODE_PLUGIN_DIRS": "~/code/claude-skills/book-pager" }
 ```
 
-- `/pages` shows or hides the pane.
+- `/pager` shows or hides the pane.
 - `p` / `n` turn the page when the pane has focus. With the prompt empty, `,` and `.` turn it from the prompt.
 - The page width is the `width` setting, in terminal columns (default 76, 20 to 200). Change "Page width" in `/config`, or set it in `~/.claude/settings.json` and restart:
 

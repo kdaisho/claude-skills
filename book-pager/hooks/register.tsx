@@ -160,7 +160,7 @@ async function turnPage($: EngineInterface, direction: 1 | -1) {
 function openPane($: EngineInterface, isFocused: boolean) {
   return $.ui.open({
     id: PANE,
-    title: "Pages",
+    title: "Pager",
     columns: maxColumns + DOCK_MARGIN,
     ...(isFocused ? { focus: true } : {}),
   });
@@ -173,7 +173,7 @@ export const register: Register = (on, options) => {
 
   on("session.start", async ($, e, next) => {
     await $.command.register({
-      name: "pages",
+      name: "pager",
       description: "Show or hide Claude's replies as fixed pages in a side pane",
     });
     void openPane($, false);
@@ -191,21 +191,21 @@ export const register: Register = (on, options) => {
   });
 
   // A toggle, because the close key and Escape do not close the pane everywhere.
-  on("command.run", { command: "pages" }, async ($) => {
+  on("command.run", { command: "pager" }, async ($) => {
     const panes = await $.ui.panes();
     if (panes.some((pane) => pane.id === PANE && pane.isShown && pane.isPlaced)) {
       await $.ui.close({ id: PANE });
 
-      return { text: "Pages pane closed." };
+      return { text: "Pager pane closed." };
     }
     await openPane($, true);
 
-    return { text: "Pages pane opened." };
+    return { text: "Pager pane opened." };
   });
 
   // A prompt typed while Claude works joins the prompt of the running turn.
   on("prompt.submit", async ($, e, next) => {
-    if (e.text.trim() !== "/pages") {
+    if (e.text.trim() !== "/pager") {
       await update($, pendingPrompt, (pending) =>
         e.turnId !== undefined && pending !== ""
           ? `${pending}\n${e.text}`
