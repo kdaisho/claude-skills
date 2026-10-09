@@ -99,12 +99,19 @@ test("a table wider than the width becomes one card per row", async () => {
   ]);
 });
 
-test("a table that fits stays as aligned columns", async () => {
+test("a table that fits is drawn with borders", async () => {
   const table = ["| A | Long |", "|---|---|", "| `x` | y |", "| zz | \\| |"].join(
     "\n",
   );
   const lines = formatMarkdown(table, 76).map((line) =>
     line.map((run) => run.text).join(""),
   );
-  expect(lines).toEqual(["A   Long", "─".repeat(8), "x   y", "zz  |"]);
+  expect(lines).toEqual([
+    "┌────┬──────┐",
+    "│ A  │ Long │",
+    "├────┼──────┤",
+    "│ x  │ y    │",
+    "│ zz │ |    │",
+    "└────┴──────┘",
+  ]);
 });

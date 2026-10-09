@@ -2,7 +2,7 @@ import { expect, mock, test } from "claude-code/testing";
 
 // 6 body rows less the 2 header rows leaves 4 lines per page.
 const PANE_PROPS = {
-  title: "Pages",
+  title: "Pager",
   isFocused: true,
   bodyColumns: 40,
   placement: "dock",

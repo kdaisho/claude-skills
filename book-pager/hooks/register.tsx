@@ -87,8 +87,8 @@ async function saveEntries($: EngineInterface, saved: Book) {
   await $.store.set(SAVED_SESSIONS_KEY, sessions);
 }
 
-// The page width from the plugin's settings, set when the module loads.
-let maxColumns = DEFAULT_COLUMNS;
+// The text width the pane opens with, from the plugin's settings. A width the person drags the pane to wins.
+let openColumns = DEFAULT_COLUMNS;
 
 // The pane's text size from its last draw, so a key typed in the prompt pages the same way.
 let layout = { width: DEFAULT_COLUMNS, rows: 20 };
@@ -160,20 +160,20 @@ async function turnPage($: EngineInterface, direction: 1 | -1) {
 function openPane($: EngineInterface, isFocused: boolean) {
   return $.ui.open({
     id: PANE,
-    title: "Pages",
-    columns: maxColumns + DOCK_MARGIN,
+    title: "Pager",
+    columns: openColumns + DOCK_MARGIN,
     ...(isFocused ? { focus: true } : {}),
   });
 }
 
 export const register: Register = (on, options) => {
-  maxColumns =
+  openColumns =
     typeof options.width === "number" ? options.width : DEFAULT_COLUMNS;
-  layout = { ...layout, width: maxColumns };
+  layout = { ...layout, width: openColumns };
 
   on("session.start", async ($, e, next) => {
     await $.command.register({
-      name: "pages",
+      name: "pager",
       description: "Show or hide Claude's replies as fixed pages in a side pane",
     });
     void openPane($, false);
@@ -191,21 +191,21 @@ export const register: Register = (on, options) => {
   });
 
   // A toggle, because the close key and Escape do not close the pane everywhere.
-  on("command.run", { command: "pages" }, async ($) => {
+  on("command.run", { command: "pager" }, async ($) => {
     const panes = await $.ui.panes();
     if (panes.some((pane) => pane.id === PANE && pane.isShown && pane.isPlaced)) {
       await $.ui.close({ id: PANE });
 
-      return { text: "Pages pane closed." };
+      return { text: "Pager pane closed." };
     }
     await openPane($, true);
 
-    return { text: "Pages pane opened." };
+    return { text: "Pager pane opened." };
   });
 
   // A prompt typed while Claude works joins the prompt of the running turn.
   on("prompt.submit", async ($, e, next) => {
-    if (e.text.trim() !== "/pages") {
+    if (e.text.trim() !== "/pager") {
       await update($, pendingPrompt, (pending) =>
         e.turnId !== undefined && pending !== ""
           ? `${pending}\n${e.text}`
@@ -256,7 +256,7 @@ export const register: Register = (on, options) => {
   on("ui.render", { component: "Pane", requestId: PANE }, async ($, e) => {
     const { Box, Text, Button } = $.ui.resolve(e);
     layout = {
-      width: Math.max(10, Math.min(maxColumns, e.props.bodyColumns)),
+      width: Math.max(10, e.props.bodyColumns),
       rows: Math.max(1, e.props.scroll.bodyRows - HEADER_ROWS),
     };
     const spot = await findSpot($);

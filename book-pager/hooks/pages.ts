@@ -172,7 +172,6 @@ function hardWrap(
 }
 
 const TABLE_ROW = /^\s*\|/;
-const COLUMN_GAP = 2;
 
 // "\|" is a pipe inside a cell, not a column border.
 function splitCells(row: string): string[] {
@@ -188,7 +187,7 @@ function isDividerRow(cells: string[]): boolean {
   return cells.every((cell) => /^:?-+:?$/.test(cell));
 }
 
-// Aligned columns, or undefined when the table is wider than the width.
+// A table with borders, or undefined when it is wider than the width.
 function formatGrid(
   header: string[],
   body: string[][],
@@ -204,28 +203,37 @@ function formatGrid(
   const widths = Array.from({ length: columns }, (_, column) =>
     Math.max(0, ...rows.map((row) => lineWidth(row[column] ?? []))),
   );
-  const total =
-    widths.reduce((sum, size) => sum + size, 0) +
-    COLUMN_GAP * Math.max(0, columns - 1);
+  // Each cell has "│ " before it and " " after it, and the last one a closing "│".
+  const total = widths.reduce((sum, size) => sum + size + 3, 1);
   if (total > width) {
     return undefined;
   }
-  const lines: Line[] = rows.map((row) =>
-    widths.flatMap((size, column) => {
+  const border = (left: string, middle: string, right: string): Line => [
+    {
+      text: `${left}${widths.map((size) => "─".repeat(size + 2)).join(middle)}${right}`,
+      style: "dim",
+    },
+  ];
+  const bar: Run = { text: "│", style: "dim" };
+  const lines: Line[] = rows.map((row) => [
+    ...widths.flatMap((size, column) => {
       const cell = row[column] ?? [];
-      if (column === columns - 1) {
-        return cell;
-      }
-      const padding = size - lineWidth(cell) + COLUMN_GAP;
+      const padding = size - lineWidth(cell) + 1;
 
-      return [...cell, { text: " ".repeat(padding), style: "plain" as const }];
+      return [
+        bar,
+        { text: " ", style: "plain" as const },
+        ...cell,
+        { text: " ".repeat(padding), style: "plain" as const },
+      ];
     }),
-  );
+    bar,
+  ]);
   if (header.length > 0) {
-    lines.splice(1, 0, [{ text: "─".repeat(total), style: "dim" }]);
+    lines.splice(1, 0, border("├", "┼", "┤"));
   }
 
-  return lines;
+  return [border("┌", "┬", "┐"), ...lines, border("└", "┴", "┘")];
 }
 
 // One block per row: the first cell is the title, then each header over its value.
