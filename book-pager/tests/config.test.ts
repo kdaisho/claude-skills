@@ -1,41 +1,68 @@
 import { expect, mock, test } from "claude-code/testing";
 import type { Engine } from "claude-code/testing";
 
-const PANE_PROPS = {
-  title: "Pager",
-  isFocused: true,
-  bodyColumns: 60,
-  placement: "dock",
-  scroll: { offset: 0, bodyRows: 6 },
-  view: {},
-} as const;
+const paneProps = (bodyColumns: number) =>
+  ({
+    title: "Pager",
+    isFocused: true,
+    bodyColumns,
+    placement: "dock",
+    scroll: { offset: 0, bodyRows: 40 },
+    view: {},
+  }) as const;
 
-// The rule under the buttons is exactly as wide as the page text.
-const showsRule = async ($: Engine, width: number) => {
+const shows = async ($: Engine, bodyColumns: number, text: RegExp) => {
   const ui = await $.ui.mount({
     plugin: "book-pager",
     surface: "terminal",
     component: "Pane",
     requestId: "book-pager",
-    props: PANE_PROPS,
+    props: paneProps(bodyColumns),
   });
-  const rule = await ui.find({
-    type: "Text",
-    text: new RegExp(`^─{${width}}$`),
-  });
+  const found = await ui.find({ type: "Text", text });
   await ui.unmount();
-  return rule !== undefined;
+  return found !== undefined;
 };
 
-test("pages fill the pane up to the default width", async ($, on) => {
+// The rule under the buttons is exactly as wide as the page text.
+const showsRule = ($: Engine, bodyColumns: number, width: number) =>
+  shows($, bodyColumns, new RegExp(`^─{${width}}$`));
+
+test("pages fill the pane", async ($, on) => {
   on("session.id", () => ({ value: "session-a" }));
   mock.store(on);
-  expect(await showsRule($, 60)).toBe(true);
+  expect(await showsRule($, 60, 60)).toBe(true);
 });
 
-test("the width setting caps the page width", { options: { width: 30 } }, async ($, on) => {
+test("a pane dragged wider than the width setting gets wider pages", { options: { width: 30 } }, async ($, on) => {
   on("session.id", () => ({ value: "session-a" }));
   mock.store(on);
-  expect(await showsRule($, 30)).toBe(true);
-  expect(await showsRule($, 60)).toBe(false);
+  expect(await showsRule($, 120, 120)).toBe(true);
+  expect(await showsRule($, 120, 30)).toBe(false);
+});
+
+// About 70 columns as aligned columns.
+const WIDE_TABLE = [
+  "| Method       | Grind  | Water temp | Brew time | Gear needed      |",
+  "| ------------ | ------ | ---------- | --------- | ---------------- |",
+  "| Espresso     | Fine   | 90–96 °C   | 30 sec    | Espresso machine |",
+  "| French press | Coarse | 93–96 °C   | 4 min     | Press pot        |",
+].join("\n");
+
+test("a table turns into a grid when the pane is wide enough", { options: { width: 40 } }, async ($, on) => {
+  on("session.id", () => ({ value: "session-a" }));
+  mock.store(on);
+  on("prompt.submit", (_$, e) => ({ text: e.text }));
+  on("turn.complete", (_$, e) => ({ text: e.answer }));
+  await $.prompt.submit({ text: "table", wait: false, origin: { kind: "composer" } });
+  await $.turn.complete({
+    answer: WIDE_TABLE,
+    durationMs: 1,
+    isAborted: false,
+    turnId: "table",
+    reason: "answer",
+  });
+  const grid = /Method\s{2,}Grind\s{2,}Water temp/;
+  expect(await shows($, 40, grid)).toBe(false);
+  expect(await shows($, 100, grid)).toBe(true);
 });

@@ -7,7 +7,7 @@
     "width": {
       "type": "number",
       "title": "Page width",
-      "description": "Columns of text on each page; the pane is 4 columns wider",
+      "description": "Columns of text the pane opens with; drag the pane to change it",
       "default": 76,
       "min": 20,
       "max": 200

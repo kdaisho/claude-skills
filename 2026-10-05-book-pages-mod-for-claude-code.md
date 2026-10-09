@@ -78,7 +78,7 @@ How a page is made (`hooks/pages.ts`):
 
 ```
 reply text (markdown)
-  → wrap at min(width setting, pane width) characters; Japanese counts as 2 columns
+  → wrap at the pane width in characters; Japanese counts as 2 columns
   → cut into pages of (pane height − 2) lines
   → a page never starts with a blank line
   → each reply starts on a new page
@@ -114,7 +114,9 @@ When the pane draws, the mod asks for the session id. If the book in `$.state` b
 
 ## Page width
 
-The page width is the `width` setting, in terminal columns (characters, not pixels). The default is 76, and it can be 20 to 200. The pane opens 4 columns wider than the text. If the terminal is too narrow to give the pane that much room, the text shrinks to fit the pane.
+The text fills the pane, so dragging the pane's edge changes the page width, and a table switches between columns and one card per row as it fits. Claude Code remembers a dragged width.
+
+The `width` setting is the width the pane opens with, in terminal columns of text (characters, not pixels). The default is 76, and it can be 20 to 200. The pane opens 4 columns wider than the text. A width you dragged the pane to wins over it. If the terminal is too narrow to give the pane that much room, the text shrinks to fit the pane.
 
 To change it, change "Page width" in `/config`, or add this to `~/.claude/settings.json` and restart:
 

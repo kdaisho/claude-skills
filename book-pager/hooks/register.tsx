@@ -87,8 +87,8 @@ async function saveEntries($: EngineInterface, saved: Book) {
   await $.store.set(SAVED_SESSIONS_KEY, sessions);
 }
 
-// The page width from the plugin's settings, set when the module loads.
-let maxColumns = DEFAULT_COLUMNS;
+// The text width the pane opens with, from the plugin's settings. A width the person drags the pane to wins.
+let openColumns = DEFAULT_COLUMNS;
 
 // The pane's text size from its last draw, so a key typed in the prompt pages the same way.
 let layout = { width: DEFAULT_COLUMNS, rows: 20 };
@@ -161,15 +161,15 @@ function openPane($: EngineInterface, isFocused: boolean) {
   return $.ui.open({
     id: PANE,
     title: "Pager",
-    columns: maxColumns + DOCK_MARGIN,
+    columns: openColumns + DOCK_MARGIN,
     ...(isFocused ? { focus: true } : {}),
   });
 }
 
 export const register: Register = (on, options) => {
-  maxColumns =
+  openColumns =
     typeof options.width === "number" ? options.width : DEFAULT_COLUMNS;
-  layout = { ...layout, width: maxColumns };
+  layout = { ...layout, width: openColumns };
 
   on("session.start", async ($, e, next) => {
     await $.command.register({
@@ -256,7 +256,7 @@ export const register: Register = (on, options) => {
   on("ui.render", { component: "Pane", requestId: PANE }, async ($, e) => {
     const { Box, Text, Button } = $.ui.resolve(e);
     layout = {
-      width: Math.max(10, Math.min(maxColumns, e.props.bodyColumns)),
+      width: Math.max(10, e.props.bodyColumns),
       rows: Math.max(1, e.props.scroll.bodyRows - HEADER_ROWS),
     };
     const spot = await findSpot($);
