@@ -56,3 +56,40 @@ test("a resumed session gets its own book back", async ($, on) => {
   expect((await ui.find({ type: "Text", text: /Page 1 \/ 1/ })) !== undefined).toBe(true);
   await ui.unmount();
 });
+
+test("the open pane shows the resumed session's book", async ($, on) => {
+  let sessionId = "session-a";
+  on("session.id", () => ({ value: sessionId }));
+  mock.store(on);
+  on("prompt.submit", (_$, e) => ({ text: e.text }));
+  on("turn.complete", (_$, e) => ({ text: e.answer }));
+  on("classic.SessionStart", () => ({}));
+  await $.prompt.submit({
+    text: "question in A",
+    wait: false,
+    origin: { kind: "composer" },
+  });
+  await $.turn.complete({
+    answer: "Answer in A.",
+    durationMs: 1,
+    isAborted: false,
+    turnId: "a",
+    reason: "answer",
+  });
+
+  // A new process draws the pane under a fresh id before the resume picks session A.
+  sessionId = "session-fresh";
+  const ui = await $.ui.mount({
+    plugin: "book-pager",
+    surface: "terminal",
+    component: "Pane",
+    requestId: "book-pager",
+    props: PANE_PROPS,
+  });
+  expect((await ui.find({ type: "Text", text: /No finished reply yet/ })) !== undefined).toBe(true);
+
+  sessionId = "session-a";
+  await $.classic.SessionStart({ source: "resume", session_id: "session-a" });
+  expect((await ui.find({ type: "Text", text: /Answer in A\./ })) !== undefined).toBe(true);
+  await ui.unmount();
+});

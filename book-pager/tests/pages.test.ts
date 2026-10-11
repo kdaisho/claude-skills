@@ -99,6 +99,24 @@ test("a table wider than the width becomes one card per row", async () => {
   ]);
 });
 
+test("a long cell wraps inside its column when the table can fit", async () => {
+  const lines = formatMarkdown(WIDE_TABLE, 40).map((line) =>
+    line.map((run) => run.text).join(""),
+  );
+  expect(lines).toEqual([
+    "┌────────┬─────────┬───────────────────┐",
+    "│ Ticket │ Owner   │ How it matches    │",
+    "├────────┼─────────┼───────────────────┤",
+    "│ APP-1  │ Nobody  │ Overlap. It       │",
+    "│        │         │ covers the same   │",
+    "│        │         │ page and the same │",
+    "│        │         │ columns.          │",
+    "├────────┼─────────┼───────────────────┤",
+    "│ APP-2  │ Someone │ Related.          │",
+    "└────────┴─────────┴───────────────────┘",
+  ]);
+});
+
 test("a table that fits is drawn with borders", async () => {
   const table = ["| A | Long |", "|---|---|", "| `x` | y |", "| zz | \\| |"].join(
     "\n",

@@ -71,7 +71,7 @@ Seven hooks in `hooks/register.tsx`:
 | `prompt.submit`    | Saves my prompt until Claude's reply to it finishes                                           |
 | `turn.complete`    | When a reply finishes, adds `{ prompt, reply }` to the book and jumps to its first page       |
 | `prompt.edit`      | When the prompt is empty and the pane is visible, takes `,` or `.` and turns the page instead |
-| `classic.SessionStart` | After `/clear`, redraws the pane with the new session's book, which is empty          |
+| `classic.SessionStart` | After a restart, `/resume` or `/clear`, puts that session's book in `$.state` and redraws the pane |
 | `ui.render` (Pane) | Draws the current page                                                                        |
 
 How a page is made (`hooks/pages.ts`):
@@ -114,7 +114,7 @@ When the pane draws, the mod asks for the session id. If the book in `$.state` b
 
 ## Page width
 
-The text fills the pane, so dragging the pane's edge changes the page width, and a table switches between a table with borders and one card per row as it fits. Claude Code remembers a dragged width.
+The text fills the pane, so dragging the pane's edge changes the page width. A table keeps its borders as long as each column can be at least as wide as its longest word (up to 12 columns): long cells wrap inside their column, with a line between rows. Only when even that does not fit does it switch to one card per row. Before 2026-10-10 a table needed every cell on one line, so most tables with a sentence in a cell became cards. Claude Code remembers a dragged width.
 
 The `width` setting is the width the pane opens with, in terminal columns of text (characters, not pixels). The default is 76, and it can be 20 to 200. The pane opens 4 columns wider than the text. A width you dragged the pane to wins over it. If the terminal is too narrow to give the pane that much room, the text shrinks to fit the pane.
 
@@ -132,7 +132,7 @@ Do not change `"default"` in `plugin.json` to set your own width. That changes i
 1. Run `claude --version`. The mod was built and tested on 2.1.289. If the version is older, run `claude update` first, because the mod API is "early access" and changes between releases.
 2. Clone this repository to `~/code/claude-skills/`, or run `git pull` if it is already there.
 3. Run `claude plugin validate ~/code/claude-skills/book-pager`. The expected result is "Validation passed with warnings". The known warning is "No author information provided". It is harmless.
-4. Run `claude plugin test ~/code/claude-skills/book-pager`. The expected result is "12 pass, 0 fail".
+4. Run `claude plugin test ~/code/claude-skills/book-pager`. The expected result is "15 pass, 0 fail".
 5. If a step fails, the API has probably changed. Ask Claude to load the `plugin-authoring` skill, read `.claude-plugin/types/claude-code/index.d.ts` in the mod folder (Claude Code writes it for the installed version), and fix the code to match it.
 6. Add the `CLAUDE_CODE_PLUGIN_DIRS` line from "Where it lives" to `~/.claude/settings.json`. If the file already has an `"env"` block, add the line inside that block. Do not replace the file. If the line already points to `~/.claude/mods/book-pages` (the old place), change it, then delete that old folder. If it points to `~/code/claude-skills/book-pages` (the name before the rename to `book-pager`), change it, and rename the `book-pages` key in `pluginConfigs` to `book-pager` too.
 7. Start a new session and run `/pager`.
@@ -147,13 +147,14 @@ If `/pager` is missing from the `/` list even though steps 3 and 4 passed, the m
 - The book survives compacting. The mod keeps its own copy of each reply, and compacting does not reset it.
 - Each session has its own book. A new session or `/clear` starts an empty book.
 - A restart or `/resume` brings the session's book back from `$.store`. Fixed on 2026-10-06; before that, the book was only in `$.state` and was lost.
+- Fixed on 2026-10-10: after `claude --resume` or `--continue`, the pane stayed empty. It drew once at start, before the resumed session's id was known, and nothing drew it again. Now every `SessionStart` (startup, resume, clear, fork) puts that session's book in `$.state`, which redraws the pane.
 - `/branch` starts a new session, so it starts an empty book. Not tested.
 - Saved books have no time limit. They are deleted only when there are more than 30, or when the store is full.
 
 ## Changing it
 
 - Check: `claude plugin validate <folder>`
-- Test: `claude plugin test <folder>` (9 tests: line width, styles, page size, prompt cut, page turning on terminal and desktop, a resumed session getting its own book back, and the width setting with its default and a set value)
+- Test: `claude plugin test <folder>` (15 tests: line width, styles, page size, prompt cut, links, tables as cards, with borders and with wrapped cells, page turning on terminal and desktop, a resumed session getting its own book back, the open pane redrawing on resume, and the width setting)
 - The test tools cannot simulate typing into the prompt, so the `,` and `.` keys were only tested by hand.
 - Ask Claude to load the `plugin-authoring` skill before changing the code. It has the mod API docs.
 

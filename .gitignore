@@ -1,2 +1,2 @@
-book-pager/.claude-plugin/types/
-book-pager/tsconfig.json
+*/.claude-plugin/types/
+*/tsconfig.json

@@ -187,7 +187,53 @@ function isDividerRow(cells: string[]): boolean {
   return cells.every((cell) => /^:?-+:?$/.test(cell));
 }
 
-// A table with borders, or undefined when it is wider than the width.
+// A column is never narrower than its longest word, up to this width. A longer word is cut.
+const MIN_COLUMN = 12;
+
+function sum(sizes: number[]): number {
+  return sizes.reduce((total, size) => total + size, 0);
+}
+
+// Each column's text width. A table wider than `room` takes the room from its longest columns, whose text then wraps,
+// or is undefined when even its narrowest columns do not fit.
+function columnWidths(rows: Run[][][], room: number): number[] | undefined {
+  const columns = Math.max(0, ...rows.map((row) => row.length));
+  const natural = Array.from({ length: columns }, (_, column) =>
+    Math.max(0, ...rows.map((row) => lineWidth(row[column] ?? []))),
+  );
+  if (sum(natural) <= room) {
+    return natural;
+  }
+  const least = natural.map((size, column) =>
+    Math.min(
+      size,
+      MIN_COLUMN,
+      Math.max(
+        1,
+        ...rows.flatMap((row) => toWords(row[column] ?? []).map(lineWidth)),
+      ),
+    ),
+  );
+  if (sum(least) > room) {
+    return undefined;
+  }
+  // The spare room goes to each column by how much more it wants.
+  const spare = room - sum(least);
+  const wanted = sum(natural) - sum(least);
+  const widths = least.map(
+    (size, column) =>
+      size + Math.floor((spare * ((natural[column] ?? 0) - size)) / wanted),
+  );
+  for (let column = 0; sum(widths) < room; column = (column + 1) % columns) {
+    if ((widths[column] ?? 0) < (natural[column] ?? 0)) {
+      widths[column] = (widths[column] ?? 0) + 1;
+    }
+  }
+
+  return widths;
+}
+
+// A table with borders, or undefined when it does not fit the width. Long cells wrap inside their column.
 function formatGrid(
   header: string[],
   body: string[][],
@@ -200,12 +246,9 @@ function formatGrid(
     ...body.map((row) => row.map((cell) => parseInline(cell, "plain"))),
   ];
   const columns = Math.max(0, ...rows.map((row) => row.length));
-  const widths = Array.from({ length: columns }, (_, column) =>
-    Math.max(0, ...rows.map((row) => lineWidth(row[column] ?? []))),
-  );
   // Each cell has "│ " before it and " " after it, and the last one a closing "│".
-  const total = widths.reduce((sum, size) => sum + size + 3, 1);
-  if (total > width) {
+  const widths = columnWidths(rows, width - columns * 3 - 1);
+  if (widths === undefined) {
     return undefined;
   }
   const border = (left: string, middle: string, right: string): Line => [
@@ -215,23 +258,36 @@ function formatGrid(
     },
   ];
   const bar: Run = { text: "│", style: "dim" };
-  const lines: Line[] = rows.map((row) => [
-    ...widths.flatMap((size, column) => {
-      const cell = row[column] ?? [];
-      const padding = size - lineWidth(cell) + 1;
+  const drawn = rows.map((row) => {
+    const cells = widths.map((size, column) =>
+      wrap(row[column] ?? [], size, "", ""),
+    );
+    const height = Math.max(...cells.map((lines) => lines.length));
 
-      return [
-        bar,
-        { text: " ", style: "plain" as const },
-        ...cell,
-        { text: " ".repeat(padding), style: "plain" as const },
-      ];
-    }),
-    bar,
-  ]);
-  if (header.length > 0) {
-    lines.splice(1, 0, border("├", "┼", "┤"));
-  }
+    return Array.from({ length: height }, (_, index): Line => [
+      ...widths.flatMap((size, column) => {
+        const cell = cells[column]?.[index] ?? [];
+        const padding = size - lineWidth(cell) + 1;
+
+        return [
+          bar,
+          { text: " ", style: "plain" as const },
+          ...cell,
+          { text: " ".repeat(padding), style: "plain" as const },
+        ];
+      }),
+      bar,
+    ]);
+  });
+  // With a wrapped cell, a line between the rows shows where each row ends.
+  const isWrapped = drawn.some((lines) => lines.length > 1);
+  const lines: Line[] = [];
+  drawn.forEach((row, index) => {
+    if (index > 0 && (isWrapped || (index === 1 && header.length > 0))) {
+      lines.push(border("├", "┼", "┤"));
+    }
+    lines.push(...row);
+  });
 
   return [border("┌", "┬", "┐"), ...lines, border("└", "┴", "┘")];
 }
