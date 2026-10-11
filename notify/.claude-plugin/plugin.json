@@ -1,0 +1,5 @@
+{
+  "name": "notify",
+  "version": "0.1.0",
+  "description": "Raises a desktop notification when Claude finishes a reply"
+}

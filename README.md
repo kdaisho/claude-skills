@@ -39,12 +39,18 @@ Saves a question for later without sending it to Claude.
 - A line above the prompt shows "2 saved questions · /defer to pick". `/differ` does the same as `/defer`.
 - Each session has its own list. It survives compaction, restarts and `/resume`, and `/clear` starts an empty one. A list is saved in `$.store` under `items:<session id>`, and is removed when it becomes empty, when it has not changed for 30 days, or when more than 50 lists are saved (the one changed longest ago goes first).
 
+### `notify`
+
+Raises a desktop notification, "<session> is done", when Claude finishes a reply. The name is the `/rename` title, else the folder's name. It goes through Claude Code's notification channel: set `"preferredNotifChannel": "ghostty"` in `~/.claude/settings.json` (or `auto` in Ghostty). Claude Code raises its own notification when it waits for an answer.
+
+A `Notification` hook also hears this notification, with `notification_type` `plugin_notification`, so a voice hook can skip it.
+
 ### Loading the mods
 
 Separate the folders with `:`:
 
 ```json
-"env": { "CLAUDE_CODE_PLUGIN_DIRS": "~/code/claude-skills/book-pager:~/code/claude-skills/defer" }
+"env": { "CLAUDE_CODE_PLUGIN_DIRS": "~/code/claude-skills/book-pager:~/code/claude-skills/defer:~/code/claude-skills/notify" }
 ```
 
-The mod API is early access. book-pager was built on Claude Code 2.1.289; defer on 2.1.296. Setup steps, the design and what was tested are in [the design note](2026-10-05-book-pages-mod-for-claude-code.md).
+The mod API is early access. book-pager was built on Claude Code 2.1.289; defer and notify on 2.1.296. Setup steps, the design and what was tested are in [the design note](2026-10-05-book-pages-mod-for-claude-code.md).
