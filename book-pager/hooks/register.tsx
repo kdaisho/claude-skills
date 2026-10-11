@@ -35,8 +35,11 @@ const entriesKey = (sessionId: string) => `entries:${sessionId}`;
 const positionKey = (sessionId: string) => `position:${sessionId}`;
 
 // The running session's book: the copy in $.state, or the saved one when that copy is another session's.
-async function loadBook($: EngineInterface): Promise<Book> {
-  const sessionId = await $.session.id();
+async function loadBook(
+  $: EngineInterface,
+  sessionId?: string,
+): Promise<Book> {
+  sessionId ??= await $.session.id();
   const held = await read($, heldBook);
   if (held.sessionId === sessionId) {
     return held;
@@ -181,11 +184,11 @@ export const register: Register = (on, options) => {
     return next(e);
   });
 
-  // /clear goes on under a new session id with no session.start, so this redraws the pane with that session's book.
+  // A restart with --resume or --continue, /resume and /clear go on under another session id, often after the pane
+  // has drawn. Putting that session's book in $.state redraws the pane with it.
   on("classic.SessionStart", async ($, e, next) => {
-    if (e.source === "clear") {
-      await update($, heldBook, () => EMPTY_BOOK);
-    }
+    const book = await loadBook($, e.session_id);
+    await update($, heldBook, () => book);
 
     return next(e);
   });
