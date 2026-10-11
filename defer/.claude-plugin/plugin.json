@@ -1,0 +1,6 @@
+{
+  "name": "defer",
+  "version": "0.1.0",
+  "description": "Saves a question for later without sending it to Claude, and puts it back in the prompt when picked",
+  "types": "./types/index.d.ts"
+}

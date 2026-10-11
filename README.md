@@ -1,6 +1,6 @@
 # claude-skills
 
-Reusable Claude Code skills, and one mod.
+Reusable Claude Code skills, and a few mods.
 
 ## Skills
 
@@ -30,4 +30,21 @@ To load it in every session, add this to `~/.claude/settings.json` (inside the `
   "pluginConfigs": { "book-pager": { "options": { "width": 90 } } }
   ```
 
-The mod API is early access, and the mod was built on Claude Code 2.1.289. Setup steps, the design and what was tested are in [the design note](2026-10-05-book-pages-mod-for-claude-code.md).
+### `defer`
+
+Saves a question for later without sending it to Claude.
+
+- Save: `/defer <question>`, or end a prompt with `/defer`. Both work while Claude is busy. The prompt form never reaches Claude, and the command form keeps the question out of the conversation.
+- Pick: `/defer` with no text opens a list. Press `1`, `2`, and so on, or click. The question goes into the prompt box and leaves the list.
+- A line above the prompt shows "2 saved questions · /defer to pick". `/differ` does the same as `/defer`.
+- Each session has its own list. It survives compaction, restarts and `/resume`, and `/clear` starts an empty one. A list is saved in `$.store` under `items:<session id>`, and is removed when it becomes empty, when it has not changed for 30 days, or when more than 50 lists are saved (the one changed longest ago goes first).
+
+### Loading the mods
+
+Separate the folders with `:`:
+
+```json
+"env": { "CLAUDE_CODE_PLUGIN_DIRS": "~/code/claude-skills/book-pager:~/code/claude-skills/defer" }
+```
+
+The mod API is early access. book-pager was built on Claude Code 2.1.289; defer on 2.1.296. Setup steps, the design and what was tested are in [the design note](2026-10-05-book-pages-mod-for-claude-code.md).
